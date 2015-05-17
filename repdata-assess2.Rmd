@@ -1,0 +1,61 @@
+---
+title: "How weather related events impacts the US"
+author: "Mario Azevedo"
+date: "Sunday, May 24, 2015"
+output: html_document
+---
+
+###Synopsis
+* Synopsis: Immediately after the title, there should be a synopsis which describes and summarizes your analysis in at most 10 complete sentences
+
+###Data Processing
+
+####Loading the libraries that will be used 
+```{r,message=FALSE, warning=FALSE} 
+require(data.table)
+require(dplyr)
+require(tidyr)
+require(readr)
+```
+
+####Downloading and reading the data
+```{r,cache=TRUE,message=FALSE,warning=FALSE}
+#download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2",
+#              "repdata-data-StormData.csv.bz2")
+data <- read.csv('repdata-data-StormData.csv.bz2')
+#Reading a data file prepared from the "Storm Data Event Table"
+type <- readLines('storm.txt')
+data <- data.table(data)
+```
+
+####Cleaning the data
+```{r}
+data[data$EVTYPE == "TSTM WIND"]$EVTYPE <- "THUNDERSTORM WIND"
+data[data$EVTYPE == "THUNDERSTORM WINDS"]$EVTYPE <- "THUNDERSTORM WIND"
+data[data$EVTYPE == "MARINE TSTM WIND"]$EVTYPE <- "MARINE THUNDERSTORM WIND"
+data[data$EVTYPE == "MARINE THUNDERSTORM WINDS"]$EVTYPE <- "MARINE THUNDERSTORM WIND"
+data <- filter(data,EVTYPE %in% type)
+```
+
+####Preparing data for first question
+```{r}
+evFatal <- group_by(data,EVTYPE) %>% 
+        summarise(TofEV=n(),Fatalities = sum(FATALITIES),
+                  Injuries=sum(INJURIES)) %>%
+        arrange(desc(Fatalities))
+evFatal
+```
+
+
+* There should be a section titled Data Processing which describes (in words and code) how the data were loaded into R and processed for analysis. In particular, your analysis must start from the raw CSV file containing the data. You cannot do any preprocessing outside the document. If preprocessing is time-consuming you may consider using the cache = TRUE option for certain code chunks.
+
+###Results
+* There should be a section titled Results in which your results are presented.
+
+* You may have other sections in your analysis, but Data Processing and Results are required.
+
+* The analysis document must have at least one figure containing a plot.
+
+* Your analyis must have no more than three figures. Figures may have multiple plots in them (i.e. panel plots), but there cannot be more than three figures total.
+
+* You must show all your code for the work in your analysis document. This may make the document a bit verbose, but that is okay. In general, you should ensure that echo = TRUE for every code chunk (this is the default setting in knitr).
