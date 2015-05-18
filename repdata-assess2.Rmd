@@ -39,11 +39,11 @@ data <- filter(data,EVTYPE %in% type)
 
 ####Preparing data for first question
 ```{r}
-evFatal <- group_by(data,EVTYPE) %>% 
+harm <- group_by(data,EVTYPE) %>% 
         summarise(TofEV=n(),Fatalities = sum(FATALITIES),
                   Injuries=sum(INJURIES)) %>%
         arrange(desc(Fatalities))
-evFatal
+harm
 ```
 
 
