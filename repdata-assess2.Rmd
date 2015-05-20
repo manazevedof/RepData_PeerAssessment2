@@ -87,8 +87,8 @@ p1 <- ggplot(result1,aes(x=ord1,y=Fatalities)) +
         geom_bar(stat="identity",position="dodge") + 
         theme(axis.text.x=element_text(size=12,colour="black")) +
         theme(axis.text.y=element_text(size=12,colour="black")) +
-        theme(axis.title=element_text(size=14)) +
-        xlab("Event Type") + 
+        theme(axis.title=element_text(size=12)) +
+        xlab("") + 
         ylab("Fatalities") +
         coord_flip()
 
@@ -98,8 +98,8 @@ p2 <- ggplot(result2,aes(x=ord2,y=Injuries)) +
     geom_bar(stat="identity",position="dodge") + 
     theme(axis.text.x=element_text(size=12,colour="black")) +
     theme(axis.text.y=element_text(size=12,colour="black")) +
-    theme(axis.title=element_text(size=14)) +
-    xlab("Event Type") + 
+    theme(axis.title=element_text(size=12)) +
+    xlab("") + 
     ylab("Injuries") +
     coord_flip()
 
@@ -109,11 +109,15 @@ p3 <- ggplot(result3,aes(x=ord3,y=sevIndex)) +
     geom_bar(stat="identity",position="dodge") + 
     theme(axis.text.x=element_text(size=12,colour="black")) +
     theme(axis.text.y=element_text(size=12,colour="black")) +
-    theme(axis.title=element_text(size=14)) +
-    xlab("Event Type") + 
+    theme(axis.title=element_text(size=12)) +
+    xlab("") + 
     ylab("Fatalities x 10 + Injuries") +
     coord_flip()
 
-grid.arrange(p1, p2, p3, ncol = 1, main = "Most Harmful Types of Events")
+grid.arrange(p1, p2, p3, ncol = 1, 
+             main = "Most Harmful Types of Events",
+             left="Event Type",
+             #widths = unit(c(20,1), "cm"),
+             heights = unit(rep(7,1), "cm"))
 ```
 
