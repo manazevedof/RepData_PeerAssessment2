@@ -16,6 +16,10 @@ require(data.table)
 require(dplyr)
 require(tidyr)
 require(readr)
+require(ggplot2)
+require(stringr)
+require(grid)
+require(gridExtra)
 ```
 
 ####Downloading and reading the data
@@ -26,6 +30,7 @@ data <- read.csv('repdata-data-StormData.csv.bz2')
 #Reading a data file prepared from the "Storm Data Event Table"
 type <- readLines('storm.txt')
 data <- data.table(data)
+nr1 <- nrow(data)
 ```
 
 ####Cleaning the data
@@ -35,27 +40,80 @@ data[data$EVTYPE == "THUNDERSTORM WINDS"]$EVTYPE <- "THUNDERSTORM WIND"
 data[data$EVTYPE == "MARINE TSTM WIND"]$EVTYPE <- "MARINE THUNDERSTORM WIND"
 data[data$EVTYPE == "MARINE THUNDERSTORM WINDS"]$EVTYPE <- "MARINE THUNDERSTORM WIND"
 data <- filter(data,EVTYPE %in% type)
+perc1 <- 100*nrow(data)/nr1
 ```
 
 ####Preparing data for first question
 ```{r}
+totFat <- sum(data$FATALITIES,na.rm=TRUE)
+totInj <- sum(data$INJURIES,na.rm=TRUE)
 harm <- group_by(data,EVTYPE) %>% 
-        summarise(TofEV=n(),Fatalities = sum(FATALITIES),
-                  Injuries=sum(INJURIES)) %>%
-        arrange(desc(Fatalities))
+        summarise(NofEV=n(),Fatalities = sum(FATALITIES),
+                  pFat= 100* sum(FATALITIES) / totFat,
+                  Injuries=sum(INJURIES),
+                  pInj= 100* sum(INJURIES) / totInj,
+                  sevIndex = (10*sum(FATALITIES)+sum(INJURIES))) 
+len <- nrow(harm)
+harm$rankF <- len - ave(harm$Fatalities,FUN=rank) + 1
+harm$rankI <- len - ave(harm$Injuries,FUN=rank) + 1
+harm$rankS <- len - ave(harm$sevIndex,FUN=rank) + 1
 harm
 ```
 
+####Preparing data for first question
+```{r}
+data <- mutate(data,PROPDMGEXP = str_to_upper(str_trim(PROPDMGEXP))) %>% 
+        filter(PROPDMGEXP %in% c('K','M','B','')) 
+
+data <- mutate(data,CROPDMGEXP = str_to_upper(str_trim(CROPDMGEXP))) %>% 
+        filter(CROPDMGEXP %in% c('K','M','B',''))
+
+perc2 <- 100*nrow(data)/nr1
+```
 
 * There should be a section titled Data Processing which describes (in words and code) how the data were loaded into R and processed for analysis. In particular, your analysis must start from the raw CSV file containing the data. You cannot do any preprocessing outside the document. If preprocessing is time-consuming you may consider using the cache = TRUE option for certain code chunks.
 
 ###Results
-* There should be a section titled Results in which your results are presented.
+* There should be a section titled Results in which your results are presented.  
+* You may have other sections in your analysis, but Data Processing and Results are required.  
+* The analysis document must have at least one figure containing a plot.  
+* Your analyis must have no more than three figures. Figures may have multiple plots in them (i.e. panel plots), but there cannot be more than three figures total.  
+* You must show all your code for the work in your analysis document. This may make the document a bit verbose, but that is okay. In general, you should ensure that echo = TRUE for every code chunk (this is the default setting in knitr).  
 
-* You may have other sections in your analysis, but Data Processing and Results are required.
+```{r}
+result1 <- arrange(harm,rankF)[1:10] %>% mutate(EVTYPE = str_to_lower(EVTYPE))
+ord1 <- reorder(result1$EVTYPE,result1$Fatalities)
+p1 <- ggplot(result1,aes(x=ord1,y=Fatalities)) + 
+        geom_bar(stat="identity",position="dodge") + 
+        theme(axis.text.x=element_text(size=12,colour="black")) +
+        theme(axis.text.y=element_text(size=12,colour="black")) +
+        theme(axis.title=element_text(size=14)) +
+        xlab("Event Type") + 
+        ylab("Fatalities") +
+        coord_flip()
 
-* The analysis document must have at least one figure containing a plot.
+result2 <- arrange(harm,rankI)[1:10] %>% mutate(EVTYPE = str_to_lower(EVTYPE))
+ord2 <- reorder(result2$EVTYPE,result2$Injuries)
+p2 <- ggplot(result2,aes(x=ord2,y=Injuries)) + 
+    geom_bar(stat="identity",position="dodge") + 
+    theme(axis.text.x=element_text(size=12,colour="black")) +
+    theme(axis.text.y=element_text(size=12,colour="black")) +
+    theme(axis.title=element_text(size=14)) +
+    xlab("Event Type") + 
+    ylab("Injuries") +
+    coord_flip()
 
-* Your analyis must have no more than three figures. Figures may have multiple plots in them (i.e. panel plots), but there cannot be more than three figures total.
+result3 <- arrange(harm,rankS)[1:10] %>% mutate(EVTYPE = str_to_lower(EVTYPE))
+ord3 <- reorder(result3$EVTYPE,result3$sevIndex)
+p3 <- ggplot(result3,aes(x=ord3,y=sevIndex)) + 
+    geom_bar(stat="identity",position="dodge") + 
+    theme(axis.text.x=element_text(size=12,colour="black")) +
+    theme(axis.text.y=element_text(size=12,colour="black")) +
+    theme(axis.title=element_text(size=14)) +
+    xlab("Event Type") + 
+    ylab("Fatalities x 10 + Injuries") +
+    coord_flip()
 
-* You must show all your code for the work in your analysis document. This may make the document a bit verbose, but that is okay. In general, you should ensure that echo = TRUE for every code chunk (this is the default setting in knitr).
+grid.arrange(p1, p2, p3, ncol = 1, main = "Most Harmful Types of Events")
+```
+
