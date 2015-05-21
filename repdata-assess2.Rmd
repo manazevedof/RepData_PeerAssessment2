@@ -95,29 +95,29 @@ p1 <- ggplot(result1,aes(x=ord1,y=Fatalities)) +
 result2 <- arrange(harm,rankI)[1:10] %>% mutate(EVTYPE = str_to_lower(EVTYPE))
 ord2 <- reorder(result2$EVTYPE,result2$Injuries)
 p2 <- ggplot(result2,aes(x=ord2,y=Injuries)) + 
-    geom_bar(stat="identity",position="dodge") + 
-    theme(axis.text.x=element_text(size=12,colour="black")) +
-    theme(axis.text.y=element_text(size=12,colour="black")) +
-    theme(axis.title=element_text(size=12)) +
-    xlab("") + 
-    ylab("Injuries") +
-    coord_flip()
+        geom_bar(stat="identity",position="dodge") + 
+        theme(axis.text.x=element_text(size=12,colour="black")) +
+        theme(axis.text.y=element_text(size=12,colour="black")) +
+        theme(axis.title=element_text(size=12)) +
+        xlab("") + 
+        ylab("Injuries") +
+        coord_flip()
 
 result3 <- arrange(harm,rankS)[1:10] %>% mutate(EVTYPE = str_to_lower(EVTYPE))
 ord3 <- reorder(result3$EVTYPE,result3$sevIndex)
 p3 <- ggplot(result3,aes(x=ord3,y=sevIndex)) + 
-    geom_bar(stat="identity",position="dodge") + 
-    theme(axis.text.x=element_text(size=12,colour="black")) +
-    theme(axis.text.y=element_text(size=12,colour="black")) +
-    theme(axis.title=element_text(size=12)) +
-    xlab("") + 
-    ylab("Fatalities x 10 + Injuries") +
-    coord_flip()
+        geom_bar(stat="identity",position="dodge") + 
+        theme(axis.text.x=element_text(size=12,colour="black")) +
+        theme(axis.text.y=element_text(size=12,colour="black")) +
+        theme(axis.title=element_text(size=12)) +
+        xlab("") + 
+        ylab("Fatalities x 10 + Injuries") +
+        coord_flip()
 
 grid.arrange(p1, p2, p3, ncol = 1, 
              main = "Most Harmful Types of Events",
-             left="Event Type",
-             #widths = unit(c(20,1), "cm"),
-             heights = unit(rep(7,1), "cm"))
+             #left="Event Type",
+             widths = unit(c(16), "cm"),
+             heights = unit(rep(5,3), "cm"),just=c("top"))
 ```
 
