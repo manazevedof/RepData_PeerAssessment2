@@ -1,9 +1,9 @@
 # Impacts of weather related events: A case study of the USA
-Mario Azevedo  
+Mario A. N. Azevedo Filho  
 Sunday, May 24, 2015  
 
 ###Synopsis
-Some weather related events can cause serious disruption of peoples life. Men may be blamed for provocating some of these "nature's revenge" episodies. This study was prepared based on a huge database of these type of events that have affect the US territory. The data set was gathered by the U.S. National Oceanic and Atmospheric Administration's (NOAA) and, in this case,  it was used a copy available at https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2. The main objectives were the evaluation of the most harmful type of events with respect to population health and those with higher impact on the economy. After the analysis it was possible to list the type of events with more significant impacts.
+Some weather related events can cause serious disruption of peoples life. Men may be blamed for provocating some of these "nature's revenge" episodies. This study was prepared based on a huge database of these type of events that have affect the US territory. The data set was gathered by the U.S. [National Oceanic and Atmospheric Administration's (NOAA)](http://www.noaa.gov/) and, in this case,  it was used a copy available [here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2). The main objectives were the evaluation of the most harmful type of events with respect to population health and those with higher impact on the economy. After the analysis it was possible to list the type of events with more significant impacts.
 
 ###Preparing the analysis environment
 
@@ -26,8 +26,7 @@ require(RCurl)
 
 ####Downloading and reading the data
 
-The idea here is to download the file and save it at the local disk. In a second step the data is read. There is a second file (storm.txt), locally produced, consisting of a list of the events types.
-
+The idea here is to download the file and save it at the local disk. In a second step the data is read. There is a second file ([storm.txt](https://github.com/manazevedof/RepData_PeerAssessment2/blob/master/storm.txt "storm.txt")), locally produced, consisting of a list of the official event types.
 
 
 ```r
@@ -164,7 +163,7 @@ p3 <- ggplot(result3,aes(x=ord3,y=sevIndex)) +
 grid.arrange(p1, p2, p3, ncol = 1, 
              main = "Figure 1: Greatest Population Health Consequences",
              widths = unit(c(16), "cm"),
-             heights = unit(c(7,7,7), "cm"),
+             heights = unit(c(6,6,6), "cm"),
              just=c("top"))
 ```
 
@@ -206,7 +205,7 @@ p3 <- ggplot(result3,aes(x=ord3,y=value,fill=type)) +
 grid.arrange(p1, p2, p3, ncol = 1, 
              main = "Figure 2: Greatest Economic Consequences",
              widths = unit(c(16), "cm"),
-             heights = unit(c(7,7,7), "cm"),
+             heights = unit(c(6,6,6), "cm"),
              just = c("top"))
 ```
 
