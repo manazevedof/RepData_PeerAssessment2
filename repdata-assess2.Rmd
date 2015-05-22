@@ -1,12 +1,14 @@
 ---
 title: "Impacts of weather related events: A case study of the USA"
-author: "Mario Azevedo"
+author: "Mario A. N. Azevedo Filho"
 date: "Sunday, May 24, 2015"
-output: html_document
+output: 
+    html_document:
+        keep_md: yes
 ---
 
 ###Synopsis
-Some weather related events can cause serious disruption of peoples life. Men may be blamed for provocating some of these "nature's revanges". This study was prepared based on a huge database of these type of events that have affect the US territory. The data set was gathered by the U.S. National Oceanic and Atmospheric Administration's (NOAA) and, in this case,  it was used a copy available at https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2. The main objectives were the evaluation of the most harmful type of events with respect to population health and those with higher impact on the economy. After the analysis it was possible to list the type of events with more significant impacts.
+Some weather related events can cause serious disruption of peoples life. Men may be blamed for provocating some of these "nature's revenge" episodies. This study was prepared based on a huge database of these type of events that have affect the US territory. The data set was gathered by the U.S. National Oceanic and Atmospheric Administration's (NOAA) and, in this case,  it was used a copy available at https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2. The main objectives were the evaluation of the most harmful type of events with respect to population health and those with higher impact on the economy. After the analysis it was possible to list the type of events with more significant impacts.
 
 ###Preparing the analysis environment
 
@@ -47,10 +49,11 @@ options(scipen=1, digits=2)
 
 The databse contains `r nr1` records. After some quick inspection it was noticed some small problems, mainly mispelled words, in the columns that will be used for this study. The column that stores the events types (EVTYPE) has `r length(unique(data$EVTYPE))`, but only `r length(unique(type))` were expected.
 
-The cleaning process consisted of fixing some mispelled words and filtering, in order to keep just the events present in the official list. The changes were:
-* Convert all values of EVTYPE to uppercase;
-* Replace "TSTM" with "THUNDERSTORM";
-* Replace "WINDS" with "WIND".
+The cleaning process consisted of fixing some mispelled words and filtering, in order to keep just the events present in the official list. The changes were:  
+
+* Convert all values of EVTYPE to uppercase;  
+* Replace "TSTM" with "THUNDERSTORM";  
+* Replace "WINDS" with "WIND".  
 
 ```{r}
 data <- mutate(data,EVTYPE = str_to_upper(str_trim(EVTYPE)))
@@ -67,12 +70,12 @@ That manipulation resulted in a slightily smaller set of data, with `r nr2` reco
 
 For the second objective it was necessary to take a look at four columns despicting economic damage affecting properties and crops:
 
-* PROPDMG - the estimated cost of the event damage caused to properties;
-* PROPDMGEXP - a factor representing a multiplier for the above column (K for thousand, M for million and B for billion dollars);
-* CROPDMG - the estimated cost of the event damage caused to crops;
-* CROPDMGEXP - a multiplier, similar to the above.
+* PROPDMG - the estimated cost of the event damage caused to properties;  
+* PROPDMGEXP - a factor representing a multiplier for the above column (K for thousand, M for million and B for billion dollars);  
+* CROPDMG - the estimated cost of the event damage caused to crops;  
+* CROPDMGEXP - a multiplier, similar to the above.  
 
-Only the multiplier columns presented some typos or factors not in the c('K','M','B','') list. That was solved with some mutation and filtering.
+Only the multiplier columns presented some typos or factors not in the c('K','M','B','') list. That was solved with some mutation and filtering.  
 
 ```{r,message=FALSE}
 data <- mutate(data,PROPDMGEXP = str_to_upper(str_trim(PROPDMGEXP))) %>% 
@@ -125,8 +128,6 @@ econ$rankC <- len - ave(econ$CropDmg,FUN=rank) + 1
 econ$rankT <- len - ave(econ$TotDmg,FUN=rank) + 1
 ```
 
-
-
 ###Results
 * There should be a section titled Results in which your results are presented.  
 * You may have other sections in your analysis, but Data Processing and Results are required.  
@@ -135,43 +136,28 @@ econ$rankT <- len - ave(econ$TotDmg,FUN=rank) + 1
 * You must show all your code for the work in your analysis document. This may make the document a bit verbose, but that is okay. In general, you should ensure that echo = TRUE for every code chunk (this is the default setting in knitr).  
 
 
-####Results 1 
+####Fatalities and Injuries
 ```{r fig.height = 8.5}
 result1 <- arrange(harm,rankF)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
 ord1 <- reorder(result1$EVTYPE,result1$Fatalities)
 p1 <- ggplot(result1,aes(x=ord1,y=Fatalities)) + 
         geom_bar(stat="identity",position="dodge",fill="red",color="black") + 
-        theme(axis.text.x=element_text(colour="black")) +
-        theme(axis.text.y=element_text(colour="black")) +
-        theme(axis.title=element_text(size=12)) +
-        xlab("") + 
-        ylab("Fatalities") +
-        coord_flip()
+        xlab("") + ylab("Fatalities") + coord_flip()
 
 result2 <- arrange(harm,rankI)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
 ord2 <- reorder(result2$EVTYPE,result2$Injuries)
 p2 <- ggplot(result2,aes(x=ord2,y=Injuries)) + 
         geom_bar(stat="identity",position="dodge",fill="yellow",color="black") + 
-        theme(axis.text.x=element_text(colour="black")) +
-        theme(axis.text.y=element_text(colour="black")) +
-        theme(axis.title=element_text(size=12)) +
-        xlab("") + 
-        ylab("Injuries") +
-        coord_flip()
+        xlab("") + ylab("Injuries") + coord_flip()
 
 result3 <- arrange(harm,rankS)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
 ord3 <- reorder(result3$EVTYPE,result3$sevIndex)
 p3 <- ggplot(result3,aes(x=ord3,y=sevIndex)) + 
         geom_bar(stat="identity",position="dodge",fill="orange",color="black") + 
-        theme(axis.text.x=element_text(colour="black")) +
-        theme(axis.text.y=element_text(colour="black")) +
-        theme(axis.title=element_text(size=12)) +
-        xlab("") + 
-        ylab("Fatalities x 10 + Injuries") +
-        coord_flip()
+        xlab("") + ylab("Fatalities x 10 + Injuries") + coord_flip()
 
 grid.arrange(p1, p2, p3, ncol = 1, 
              main = "Figure 1: Greatest Population Health Consequences",
@@ -180,45 +166,30 @@ grid.arrange(p1, p2, p3, ncol = 1,
              just=c("top"))
 ```
 
-####Results 2
+####Properties and Crop Damage
 ```{r fig.height = 8.5}
 result1 <- arrange(econ,rankP)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
 ord1 <- reorder(result1$EVTYPE,result1$PropDmg)
 p1 <- ggplot(result1,aes(x=ord1,y=PropDmg)) + 
         geom_bar(stat="identity",position="dodge",fill="red",color="black") + 
-        theme(axis.text.x=element_text(colour="black")) +
-        theme(axis.text.y=element_text(colour="black")) +
-        theme(axis.title=element_text(size=12)) +
-        xlab("") + 
-        ylab("Property Damage (10^6 US$)") +
-        coord_flip()
+        xlab("") + ylab("Property Damage (10^6 US$)") + coord_flip()
 
 result2 <- arrange(econ,rankC)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
 ord2 <- reorder(result2$EVTYPE,result2$CropDmg)
 p2 <- ggplot(result2,aes(x=ord2,y=CropDmg)) + 
-        geom_bar(stat="identity",position="dodge",fill="orange",color="black") + 
-        theme(axis.text.x=element_text(colour="black")) +
-        theme(axis.text.y=element_text(colour="black")) +
-        theme(axis.title=element_text(size=12)) +
-        xlab("") + 
-        ylab("Crop Damage (10^6 US$)") +
-        coord_flip()
+        geom_bar(stat="identity",position="dodge",fill="yellow",color="black") + 
+        xlab("") + ylab("Crop Damage (10^6 US$)") + coord_flip()
 
 result3 <- arrange(econ,rankT)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE)) %>% 
         gather(type,value,c(PropDmg,CropDmg))
 ord3 <- reorder(result3$EVTYPE,result3$TotDmg)
-cols <- c(PropDmg="red",CropDmg="orange")
+cols <- c(PropDmg="red",CropDmg="yellow")
 p3 <- ggplot(result3,aes(x=ord3,y=value,fill=type)) + 
         geom_bar(stat="identity",barposition="stack",color="black") + 
-        theme(axis.text.x=element_text(colour="black")) +
-        theme(axis.text.y=element_text(colour="black")) +
-        theme(axis.title=element_text(size=12)) +
-        xlab("") + 
-        ylab("Property + Crop Damage (10^6 US$)") +
-        coord_flip() +
+        xlab("") + ylab("Property + Crop Damage (10^6 US$)") + coord_flip() +
         scale_fill_manual(values=cols,labels=c("Property","Crop")) +
         theme(legend.position=c(.8,.5),
               legend.title=element_blank(),
@@ -233,4 +204,9 @@ grid.arrange(p1, p2, p3, ncol = 1,
              heights = unit(c(7,7,7), "cm"),
              just = c("top"))
 ```
+
+###Conclusion
+
+###References (?)
+
 
