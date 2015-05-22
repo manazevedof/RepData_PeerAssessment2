@@ -33,15 +33,21 @@ data <- data.table(data)
 nr1 <- nrow(data)
 ```
 
+Original number of rows: `r nr1`
+
 ####Cleaning the data
 ```{r}
+data <- mutate(data,EVTYPE = str_to_upper(str_trim(EVTYPE)))
 data[data$EVTYPE == "TSTM WIND"]$EVTYPE <- "THUNDERSTORM WIND"
 data[data$EVTYPE == "THUNDERSTORM WINDS"]$EVTYPE <- "THUNDERSTORM WIND"
 data[data$EVTYPE == "MARINE TSTM WIND"]$EVTYPE <- "MARINE THUNDERSTORM WIND"
 data[data$EVTYPE == "MARINE THUNDERSTORM WINDS"]$EVTYPE <- "MARINE THUNDERSTORM WIND"
 data <- filter(data,EVTYPE %in% type)
-perc1 <- 100*nrow(data)/nr1
+nr2 <- nrow(data)
+perc1 <- 100*nr2/nr1
 ```
+
+Second number of rows: `r nr2` (`r perc1`%) 
 
 ####Preparing data for first question
 ```{r,message=FALSE}
@@ -69,8 +75,13 @@ data <- mutate(data,CROPDMGEXP = str_to_upper(str_trim(CROPDMGEXP))) %>%
         filter(CROPDMGEXP %in% c('K','M','B',''))
 any <- data[CROPDMGEXP == 'K',CROPDMG:=CROPDMG/1000]
 any <- data[CROPDMGEXP == 'B',CROPDMG:=CROPDMG*1000]
-perc2 <- 100*nrow(data)/nr1
+nr3 <- nrow(data)
+perc2 <- 100*nr3/nr1
+```
 
+Third number of rows: `r nr3` (`r perc2`%) 
+
+```{r,message=FALSE}
 totPdmg <- sum(data$PROPDMG,na.rm=TRUE)
 totCdmg <- sum(data$CROPDMG,na.rm=TRUE)
 econ <- group_by(data,EVTYPE) %>% 
@@ -99,7 +110,7 @@ econ$rankT <- len - ave(econ$TotDmg,FUN=rank) + 1
 
 
 ####Results 1 
-```{r}
+```{r fig.height = 9}
 result1 <- arrange(harm,rankF)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
 ord1 <- reorder(result1$EVTYPE,result1$Fatalities)
@@ -139,12 +150,12 @@ p3 <- ggplot(result3,aes(x=ord3,y=sevIndex)) +
 grid.arrange(p1, p2, p3, ncol = 1, 
              main = "Figure 1: Greatest Population Health Consequences",
              widths = unit(c(16), "cm"),
-             heights = unit(c(5,5,5), "cm"),
+             heights = unit(c(7,7,7), "cm"),
              just=c("top"))
 ```
 
 ####Results 2
-```{r}
+```{r fig.height = 9}
 result1 <- arrange(econ,rankP)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
 ord1 <- reorder(result1$EVTYPE,result1$PropDmg)
@@ -193,7 +204,7 @@ p3 <- ggplot(result3,aes(x=ord3,y=value,fill=type)) +
 grid.arrange(p1, p2, p3, ncol = 1, 
              main = "Figure 2: Greatest Economic Consequences",
              widths = unit(c(16), "cm"),
-             heights = unit(c(5,5,5), "cm"),
+             heights = unit(c(7,7,7), "cm"),
              just = c("top"))
 ```
 
