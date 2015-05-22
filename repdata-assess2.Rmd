@@ -1,5 +1,5 @@
 ---
-title: "How weather related events impacts the US"
+title: "Impacts of weather related events: A case study of the USA"
 author: "Mario Azevedo"
 date: "Sunday, May 24, 2015"
 output: html_document
@@ -57,18 +57,38 @@ len <- nrow(harm)
 harm$rankF <- len - ave(harm$Fatalities,FUN=rank) + 1
 harm$rankI <- len - ave(harm$Injuries,FUN=rank) + 1
 harm$rankS <- len - ave(harm$sevIndex,FUN=rank) + 1
-harm
+harm[1:10]
 ```
 
-####Preparing data for first question
+####Preparing data for second question
 ```{r}
 data <- mutate(data,PROPDMGEXP = str_to_upper(str_trim(PROPDMGEXP))) %>% 
         filter(PROPDMGEXP %in% c('K','M','B','')) 
-
+data[PROPDMGEXP == 'K',PROPDMG:=PROPDMG/1000]
+data[PROPDMGEXP == 'B',PROPDMG:=PROPDMG*1000]
 data <- mutate(data,CROPDMGEXP = str_to_upper(str_trim(CROPDMGEXP))) %>% 
         filter(CROPDMGEXP %in% c('K','M','B',''))
-
+data[CROPDMGEXP == 'K',CROPDMG:=CROPDMG/1000]
+data[CROPDMGEXP == 'B',CROPDMG:=CROPDMG*1000]
 perc2 <- 100*nrow(data)/nr1
+
+
+totPdmg <- sum(data$PROPDMG,na.rm=TRUE)
+totCdmg <- sum(data$CROPDMG,na.rm=TRUE)
+econ <- group_by(data,EVTYPE) %>% 
+        summarise(NofEV=n(),
+                  PropDmg = sum(PROPDMG),
+                  pPdmg = 100 * sum(PROPDMG) / totPdmg,
+                  CropDmg=sum(CROPDMG),
+                  pCdmg= 100 * sum(CROPDMG) / totCdmg,
+                  TotDmg = sum(PROPDMG)+sum(CROPDMG)) %>%
+        arrange(desc(PropDmg))
+
+len <- nrow(econ)
+econ$rankP <- len - ave(econ$PropDmg,FUN=rank) + 1
+econ$rankC <- len - ave(econ$CropDmg,FUN=rank) + 1
+econ$rankT <- len - ave(econ$TotDmg,FUN=rank) + 1
+econ[1:10]
 ```
 
 * There should be a section titled Data Processing which describes (in words and code) how the data were loaded into R and processed for analysis. In particular, your analysis must start from the raw CSV file containing the data. You cannot do any preprocessing outside the document. If preprocessing is time-consuming you may consider using the cache = TRUE option for certain code chunks.
@@ -80,44 +100,103 @@ perc2 <- 100*nrow(data)/nr1
 * Your analyis must have no more than three figures. Figures may have multiple plots in them (i.e. panel plots), but there cannot be more than three figures total.  
 * You must show all your code for the work in your analysis document. This may make the document a bit verbose, but that is okay. In general, you should ensure that echo = TRUE for every code chunk (this is the default setting in knitr).  
 
+
+####Results 1 
 ```{r}
-result1 <- arrange(harm,rankF)[1:10] %>% mutate(EVTYPE = str_to_lower(EVTYPE))
+result1 <- arrange(harm,rankF)[1:10] %>% 
+        mutate(EVTYPE = str_to_lower(EVTYPE))
 ord1 <- reorder(result1$EVTYPE,result1$Fatalities)
 p1 <- ggplot(result1,aes(x=ord1,y=Fatalities)) + 
-        geom_bar(stat="identity",position="dodge") + 
+        geom_bar(stat="identity",position="dodge",fill="red",color="black") + 
         theme(axis.text.x=element_text(size=12,colour="black")) +
         theme(axis.text.y=element_text(size=12,colour="black")) +
-        theme(axis.title=element_text(size=12)) +
+        theme(axis.title=element_text(size=14)) +
         xlab("") + 
         ylab("Fatalities") +
         coord_flip()
 
-result2 <- arrange(harm,rankI)[1:10] %>% mutate(EVTYPE = str_to_lower(EVTYPE))
+result2 <- arrange(harm,rankI)[1:10] %>% 
+        mutate(EVTYPE = str_to_lower(EVTYPE))
 ord2 <- reorder(result2$EVTYPE,result2$Injuries)
 p2 <- ggplot(result2,aes(x=ord2,y=Injuries)) + 
-        geom_bar(stat="identity",position="dodge") + 
+        geom_bar(stat="identity",position="dodge",fill="yellow",color="black") + 
         theme(axis.text.x=element_text(size=12,colour="black")) +
         theme(axis.text.y=element_text(size=12,colour="black")) +
-        theme(axis.title=element_text(size=12)) +
+        theme(axis.title=element_text(size=14)) +
         xlab("") + 
         ylab("Injuries") +
         coord_flip()
 
-result3 <- arrange(harm,rankS)[1:10] %>% mutate(EVTYPE = str_to_lower(EVTYPE))
+result3 <- arrange(harm,rankS)[1:10] %>% 
+        mutate(EVTYPE = str_to_lower(EVTYPE))
 ord3 <- reorder(result3$EVTYPE,result3$sevIndex)
 p3 <- ggplot(result3,aes(x=ord3,y=sevIndex)) + 
-        geom_bar(stat="identity",position="dodge") + 
+        geom_bar(stat="identity",position="dodge",fill="orange",color="black") + 
         theme(axis.text.x=element_text(size=12,colour="black")) +
         theme(axis.text.y=element_text(size=12,colour="black")) +
-        theme(axis.title=element_text(size=12)) +
+        theme(axis.title=element_text(size=14)) +
         xlab("") + 
         ylab("Fatalities x 10 + Injuries") +
         coord_flip()
 
 grid.arrange(p1, p2, p3, ncol = 1, 
-             main = "Most Harmful Types of Events",
-             #left="Event Type",
+             main = "Figure 1: Greatest Population Health Consequences",
              widths = unit(c(16), "cm"),
-             heights = unit(rep(5,3), "cm"),just=c("top"))
+             heights = unit(c(7,7,7), "cm"),
+             just=c("top"))
+```
+
+####Results 2
+```{r}
+result1 <- arrange(econ,rankP)[1:10] %>% 
+        mutate(EVTYPE = str_to_lower(EVTYPE))
+ord1 <- reorder(result1$EVTYPE,result1$PropDmg)
+p1 <- ggplot(result1,aes(x=ord1,y=PropDmg)) + 
+        geom_bar(stat="identity",position="dodge",fill="red",color="black") + 
+        theme(axis.text.x=element_text(size=12,colour="black")) +
+        theme(axis.text.y=element_text(size=12,colour="black")) +
+        theme(axis.title=element_text(size=12)) +
+        xlab("") + 
+        ylab("Property Damage (10^6 US$)") +
+        coord_flip()
+
+result2 <- arrange(econ,rankC)[1:10] %>% 
+        mutate(EVTYPE = str_to_lower(EVTYPE))
+ord2 <- reorder(result2$EVTYPE,result2$CropDmg)
+p2 <- ggplot(result2,aes(x=ord2,y=CropDmg)) + 
+        geom_bar(stat="identity",position="dodge",fill="orange",color="black") + 
+        theme(axis.text.x=element_text(size=12,colour="black")) +
+        theme(axis.text.y=element_text(size=12,colour="black")) +
+        theme(axis.title=element_text(size=12)) +
+        xlab("") + 
+        ylab("Crop Damage (10^6 US$)") +
+        coord_flip()
+
+result3 <- arrange(econ,rankT)[1:10] %>% 
+        mutate(EVTYPE = str_to_lower(EVTYPE)) %>% 
+        gather(type,value,c(PropDmg,CropDmg))
+ord3 <- reorder(result3$EVTYPE,result3$TotDmg)
+cols <- c(PropDmg="red",CropDmg="orange")
+p3 <- ggplot(result3,aes(x=ord3,y=value,fill=type)) + 
+        geom_bar(stat="identity",barposition="stack",color="black") + 
+        theme(axis.text.x=element_text(size=12,colour="black")) +
+        theme(axis.text.y=element_text(size=12,colour="black")) +
+        theme(axis.title=element_text(size=12)) +
+        xlab("") + 
+        ylab("Property + Crop Damage (10^6 US$)") +
+        coord_flip() +
+        scale_fill_manual(values=cols,labels=c("Property","Crop")) +
+        theme(legend.position=c(.8,.5),
+              legend.title=element_blank(),
+              legend.background = element_rect(color = "grey80", 
+                                               fill = "grey90", 
+                                               size = .5, 
+                                               linetype = "solid"))
+
+grid.arrange(p1, p2, p3, ncol = 1, 
+             main = "Greatest Economic Consequences",
+             widths = unit(c(16), "cm"),
+             heights = unit(c(7,7,7), "cm"),
+             just = c("top"))
 ```
 
