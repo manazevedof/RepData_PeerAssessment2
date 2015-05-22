@@ -44,7 +44,7 @@ perc1 <- 100*nrow(data)/nr1
 ```
 
 ####Preparing data for first question
-```{r}
+```{r,message=FALSE}
 totFat <- sum(data$FATALITIES,na.rm=TRUE)
 totInj <- sum(data$INJURIES,na.rm=TRUE)
 harm <- group_by(data,EVTYPE) %>% 
@@ -57,21 +57,19 @@ len <- nrow(harm)
 harm$rankF <- len - ave(harm$Fatalities,FUN=rank) + 1
 harm$rankI <- len - ave(harm$Injuries,FUN=rank) + 1
 harm$rankS <- len - ave(harm$sevIndex,FUN=rank) + 1
-harm[1:10]
 ```
 
 ####Preparing data for second question
-```{r}
+```{r,message=FALSE}
 data <- mutate(data,PROPDMGEXP = str_to_upper(str_trim(PROPDMGEXP))) %>% 
         filter(PROPDMGEXP %in% c('K','M','B','')) 
-data[PROPDMGEXP == 'K',PROPDMG:=PROPDMG/1000]
-data[PROPDMGEXP == 'B',PROPDMG:=PROPDMG*1000]
+any <- data[PROPDMGEXP == 'K',PROPDMG:=PROPDMG/1000]
+any <- data[PROPDMGEXP == 'B',PROPDMG:=PROPDMG*1000]
 data <- mutate(data,CROPDMGEXP = str_to_upper(str_trim(CROPDMGEXP))) %>% 
         filter(CROPDMGEXP %in% c('K','M','B',''))
-data[CROPDMGEXP == 'K',CROPDMG:=CROPDMG/1000]
-data[CROPDMGEXP == 'B',CROPDMG:=CROPDMG*1000]
+any <- data[CROPDMGEXP == 'K',CROPDMG:=CROPDMG/1000]
+any <- data[CROPDMGEXP == 'B',CROPDMG:=CROPDMG*1000]
 perc2 <- 100*nrow(data)/nr1
-
 
 totPdmg <- sum(data$PROPDMG,na.rm=TRUE)
 totCdmg <- sum(data$CROPDMG,na.rm=TRUE)
@@ -88,7 +86,6 @@ len <- nrow(econ)
 econ$rankP <- len - ave(econ$PropDmg,FUN=rank) + 1
 econ$rankC <- len - ave(econ$CropDmg,FUN=rank) + 1
 econ$rankT <- len - ave(econ$TotDmg,FUN=rank) + 1
-econ[1:10]
 ```
 
 * There should be a section titled Data Processing which describes (in words and code) how the data were loaded into R and processed for analysis. In particular, your analysis must start from the raw CSV file containing the data. You cannot do any preprocessing outside the document. If preprocessing is time-consuming you may consider using the cache = TRUE option for certain code chunks.
@@ -108,9 +105,9 @@ result1 <- arrange(harm,rankF)[1:10] %>%
 ord1 <- reorder(result1$EVTYPE,result1$Fatalities)
 p1 <- ggplot(result1,aes(x=ord1,y=Fatalities)) + 
         geom_bar(stat="identity",position="dodge",fill="red",color="black") + 
-        theme(axis.text.x=element_text(size=12,colour="black")) +
-        theme(axis.text.y=element_text(size=12,colour="black")) +
-        theme(axis.title=element_text(size=14)) +
+        theme(axis.text.x=element_text(colour="black")) +
+        theme(axis.text.y=element_text(colour="black")) +
+        theme(axis.title=element_text(size=12)) +
         xlab("") + 
         ylab("Fatalities") +
         coord_flip()
@@ -120,9 +117,9 @@ result2 <- arrange(harm,rankI)[1:10] %>%
 ord2 <- reorder(result2$EVTYPE,result2$Injuries)
 p2 <- ggplot(result2,aes(x=ord2,y=Injuries)) + 
         geom_bar(stat="identity",position="dodge",fill="yellow",color="black") + 
-        theme(axis.text.x=element_text(size=12,colour="black")) +
-        theme(axis.text.y=element_text(size=12,colour="black")) +
-        theme(axis.title=element_text(size=14)) +
+        theme(axis.text.x=element_text(colour="black")) +
+        theme(axis.text.y=element_text(colour="black")) +
+        theme(axis.title=element_text(size=12)) +
         xlab("") + 
         ylab("Injuries") +
         coord_flip()
@@ -132,9 +129,9 @@ result3 <- arrange(harm,rankS)[1:10] %>%
 ord3 <- reorder(result3$EVTYPE,result3$sevIndex)
 p3 <- ggplot(result3,aes(x=ord3,y=sevIndex)) + 
         geom_bar(stat="identity",position="dodge",fill="orange",color="black") + 
-        theme(axis.text.x=element_text(size=12,colour="black")) +
-        theme(axis.text.y=element_text(size=12,colour="black")) +
-        theme(axis.title=element_text(size=14)) +
+        theme(axis.text.x=element_text(colour="black")) +
+        theme(axis.text.y=element_text(colour="black")) +
+        theme(axis.title=element_text(size=12)) +
         xlab("") + 
         ylab("Fatalities x 10 + Injuries") +
         coord_flip()
@@ -142,7 +139,7 @@ p3 <- ggplot(result3,aes(x=ord3,y=sevIndex)) +
 grid.arrange(p1, p2, p3, ncol = 1, 
              main = "Figure 1: Greatest Population Health Consequences",
              widths = unit(c(16), "cm"),
-             heights = unit(c(7,7,7), "cm"),
+             heights = unit(c(5,5,5), "cm"),
              just=c("top"))
 ```
 
@@ -153,8 +150,8 @@ result1 <- arrange(econ,rankP)[1:10] %>%
 ord1 <- reorder(result1$EVTYPE,result1$PropDmg)
 p1 <- ggplot(result1,aes(x=ord1,y=PropDmg)) + 
         geom_bar(stat="identity",position="dodge",fill="red",color="black") + 
-        theme(axis.text.x=element_text(size=12,colour="black")) +
-        theme(axis.text.y=element_text(size=12,colour="black")) +
+        theme(axis.text.x=element_text(colour="black")) +
+        theme(axis.text.y=element_text(colour="black")) +
         theme(axis.title=element_text(size=12)) +
         xlab("") + 
         ylab("Property Damage (10^6 US$)") +
@@ -165,8 +162,8 @@ result2 <- arrange(econ,rankC)[1:10] %>%
 ord2 <- reorder(result2$EVTYPE,result2$CropDmg)
 p2 <- ggplot(result2,aes(x=ord2,y=CropDmg)) + 
         geom_bar(stat="identity",position="dodge",fill="orange",color="black") + 
-        theme(axis.text.x=element_text(size=12,colour="black")) +
-        theme(axis.text.y=element_text(size=12,colour="black")) +
+        theme(axis.text.x=element_text(colour="black")) +
+        theme(axis.text.y=element_text(colour="black")) +
         theme(axis.title=element_text(size=12)) +
         xlab("") + 
         ylab("Crop Damage (10^6 US$)") +
@@ -179,8 +176,8 @@ ord3 <- reorder(result3$EVTYPE,result3$TotDmg)
 cols <- c(PropDmg="red",CropDmg="orange")
 p3 <- ggplot(result3,aes(x=ord3,y=value,fill=type)) + 
         geom_bar(stat="identity",barposition="stack",color="black") + 
-        theme(axis.text.x=element_text(size=12,colour="black")) +
-        theme(axis.text.y=element_text(size=12,colour="black")) +
+        theme(axis.text.x=element_text(colour="black")) +
+        theme(axis.text.y=element_text(colour="black")) +
         theme(axis.title=element_text(size=12)) +
         xlab("") + 
         ylab("Property + Crop Damage (10^6 US$)") +
@@ -194,9 +191,9 @@ p3 <- ggplot(result3,aes(x=ord3,y=value,fill=type)) +
                                                linetype = "solid"))
 
 grid.arrange(p1, p2, p3, ncol = 1, 
-             main = "Greatest Economic Consequences",
+             main = "Figure 2: Greatest Economic Consequences",
              widths = unit(c(16), "cm"),
-             heights = unit(c(7,7,7), "cm"),
+             heights = unit(c(5,5,5), "cm"),
              just = c("top"))
 ```
 
