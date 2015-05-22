@@ -6,36 +6,52 @@ output: html_document
 ---
 
 ###Synopsis
-* Synopsis: Immediately after the title, there should be a synopsis which describes and summarizes your analysis in at most 10 complete sentences
+Some weather related events can cause serious disruption of peoples life. Men may be blamed for provocating some of these "nature's revanges". This study was prepared based on a huge database of these type of events that have affect the US territory. The data set was gathered by the U.S. National Oceanic and Atmospheric Administration's (NOAA) and, in this case,  it was used a copy available at https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2. The main objectives were the evaluation of the most harmful type of events with respect to population health and those with higher impact on the economy. After the analysis it was possible to list the type of events with more significant impacts.
 
-###Data Processing
+###Preparing the analysis environment
 
-####Loading the libraries that will be used 
+The first step consists of loading the libraries that will be used in the R script. SOme of them will be used to clean and shape the data sets (data.table, dplyr and tidyr). Other will be used to deal with graph preparation (ggplot2, grid, gridExtra). "stringr" will be used to manipulate some strings and "RCurl" is necessary for file downloading.
+
+
 ```{r,message=FALSE, warning=FALSE} 
 require(data.table)
 require(dplyr)
 require(tidyr)
-require(readr)
 require(ggplot2)
 require(stringr)
 require(grid)
 require(gridExtra)
+require(RCurl)
 ```
 
+###Data Processing
+
 ####Downloading and reading the data
+
+The idea here is to download the file and save it at the local disk. In a second step the data is read. There is a second file (storm.txt), locally produced, consisting of a list of the events types.
+
+
 ```{r,cache=TRUE,message=FALSE,warning=FALSE}
-#download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2",
-#              "repdata-data-StormData.csv.bz2")
-data <- read.csv('repdata-data-StormData.csv.bz2')
+fileURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+localfilename <- "repdata-data-StormData.csv.bz2"
+download.file(fileURL,localfilename,method="curl")
+data <- read.csv(localfilename)
 #Reading a data file prepared from the "Storm Data Event Table"
 type <- readLines('storm.txt')
 data <- data.table(data)
 nr1 <- nrow(data)
+options(scipen=1, digits=2)
 ```
 
-Original number of rows: `r nr1`
-
 ####Cleaning the data
+
+The databse contains `r nr1` records. After some quick inspection it was noticed some small problems, mainly mispelled words, in the columns that will be used for this study. The column that stores the events types (EVTYPE) has `r length(unique(data$EVTYPE))`, but only `r length(unique(type))` were expected.
+
+The cleaning process consisted of fixing some mispelled words and filtering, in order to keep just the events present in the official list. The changes were:
+* Convert all values of EVTYPE to uppercase;
+* Replace "TSTM" with "THUNDERSTORM";
+* Replace "WINDS" with "WIND".
+
 ```{r}
 data <- mutate(data,EVTYPE = str_to_upper(str_trim(EVTYPE)))
 data[data$EVTYPE == "TSTM WIND"]$EVTYPE <- "THUNDERSTORM WIND"
@@ -47,17 +63,40 @@ nr2 <- nrow(data)
 perc1 <- 100*nr2/nr1
 ```
 
-Second number of rows: `r nr2` (`r perc1`%) 
+That manipulation resulted in a slightily smaller set of data, with `r nr2` records (`r perc1`% of the original set). For dealing with the first objective (harmful events) two other colums (FATALITIES and INJURIES) are necessary but there were no problems with this data. 
 
-####Preparing data for first question
+For the second objective it was necessary to take a look at four columns despicting economic damage affecting properties and crops:
+
+* PROPDMG - the estimated cost of the event damage caused to properties;
+* PROPDMGEXP - a factor representing a multiplier for the above column (K for thousand, M for million and B for billion dollars);
+* CROPDMG - the estimated cost of the event damage caused to crops;
+* CROPDMGEXP - a multiplier, similar to the above.
+
+Only the multiplier columns presented some typos or factors not in the c('K','M','B','') list. That was solved with some mutation and filtering.
+
+```{r,message=FALSE}
+data <- mutate(data,PROPDMGEXP = str_to_upper(str_trim(PROPDMGEXP))) %>% 
+        filter(PROPDMGEXP %in% c('K','M','B','')) 
+data <- mutate(data,CROPDMGEXP = str_to_upper(str_trim(CROPDMGEXP))) %>% 
+        filter(CROPDMGEXP %in% c('K','M','B',''))
+nr3 <- nrow(data)
+perc2 <- 100*nr3/nr1
+```
+
+After this process, there were `r nr3` rows (`r perc2`% of the original set). 
+
+###Data Analyses
+
+In order to achieve the proposed objectives, some data manipulation and the production of some indicators are necessary. This section describes this process.
+
+####Fatalities and Injuries
+
 ```{r,message=FALSE}
 totFat <- sum(data$FATALITIES,na.rm=TRUE)
 totInj <- sum(data$INJURIES,na.rm=TRUE)
 harm <- group_by(data,EVTYPE) %>% 
         summarise(NofEV=n(),Fatalities = sum(FATALITIES),
-                  pFat= 100* sum(FATALITIES) / totFat,
                   Injuries=sum(INJURIES),
-                  pInj= 100* sum(INJURIES) / totInj,
                   sevIndex = (10*sum(FATALITIES)+sum(INJURIES))) 
 len <- nrow(harm)
 harm$rankF <- len - ave(harm$Fatalities,FUN=rank) + 1
@@ -65,41 +104,28 @@ harm$rankI <- len - ave(harm$Injuries,FUN=rank) + 1
 harm$rankS <- len - ave(harm$sevIndex,FUN=rank) + 1
 ```
 
-####Preparing data for second question
+####Properties and Crop Damage
+
 ```{r,message=FALSE}
-data <- mutate(data,PROPDMGEXP = str_to_upper(str_trim(PROPDMGEXP))) %>% 
-        filter(PROPDMGEXP %in% c('K','M','B','')) 
 any <- data[PROPDMGEXP == 'K',PROPDMG:=PROPDMG/1000]
 any <- data[PROPDMGEXP == 'B',PROPDMG:=PROPDMG*1000]
-data <- mutate(data,CROPDMGEXP = str_to_upper(str_trim(CROPDMGEXP))) %>% 
-        filter(CROPDMGEXP %in% c('K','M','B',''))
 any <- data[CROPDMGEXP == 'K',CROPDMG:=CROPDMG/1000]
 any <- data[CROPDMGEXP == 'B',CROPDMG:=CROPDMG*1000]
-nr3 <- nrow(data)
-perc2 <- 100*nr3/nr1
-```
-
-Third number of rows: `r nr3` (`r perc2`%) 
-
-```{r,message=FALSE}
 totPdmg <- sum(data$PROPDMG,na.rm=TRUE)
 totCdmg <- sum(data$CROPDMG,na.rm=TRUE)
 econ <- group_by(data,EVTYPE) %>% 
         summarise(NofEV=n(),
                   PropDmg = sum(PROPDMG),
-                  pPdmg = 100 * sum(PROPDMG) / totPdmg,
                   CropDmg=sum(CROPDMG),
-                  pCdmg= 100 * sum(CROPDMG) / totCdmg,
                   TotDmg = sum(PROPDMG)+sum(CROPDMG)) %>%
         arrange(desc(PropDmg))
-
 len <- nrow(econ)
 econ$rankP <- len - ave(econ$PropDmg,FUN=rank) + 1
 econ$rankC <- len - ave(econ$CropDmg,FUN=rank) + 1
 econ$rankT <- len - ave(econ$TotDmg,FUN=rank) + 1
 ```
 
-* There should be a section titled Data Processing which describes (in words and code) how the data were loaded into R and processed for analysis. In particular, your analysis must start from the raw CSV file containing the data. You cannot do any preprocessing outside the document. If preprocessing is time-consuming you may consider using the cache = TRUE option for certain code chunks.
+
 
 ###Results
 * There should be a section titled Results in which your results are presented.  
@@ -110,7 +136,7 @@ econ$rankT <- len - ave(econ$TotDmg,FUN=rank) + 1
 
 
 ####Results 1 
-```{r fig.height = 9}
+```{r fig.height = 8.5}
 result1 <- arrange(harm,rankF)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
 ord1 <- reorder(result1$EVTYPE,result1$Fatalities)
@@ -155,7 +181,7 @@ grid.arrange(p1, p2, p3, ncol = 1,
 ```
 
 ####Results 2
-```{r fig.height = 9}
+```{r fig.height = 8.5}
 result1 <- arrange(econ,rankP)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
 ord1 <- reorder(result1$EVTYPE,result1$PropDmg)

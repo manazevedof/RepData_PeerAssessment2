@@ -6,3 +6,5 @@ readr
 ggplot2
 stringr
 gridExtra
+bitops
+RCurl
