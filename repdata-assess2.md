@@ -271,7 +271,7 @@ The percentage of the top-ten events for each indicator are:
 
   
   
-You can access the data sets and the script on my [GitHub page](https://github.com/manazevedof/RepData_PeerAssessment2).
+You can access the data sets and the script on my [GitHub page: https://github.com/manazevedof/RepData_PeerAssessment2/](https://github.com/manazevedof/RepData_PeerAssessment2/).
 
 
 
