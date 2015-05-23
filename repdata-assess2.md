@@ -20,6 +20,7 @@ require(stringr)
 require(grid)
 require(gridExtra)
 require(RCurl)
+options(scipen=1, digits=2,width=100)
 ```
 
 ###Data Processing
@@ -38,10 +39,9 @@ data <- read.csv(localfilename)
 type <- readLines('storm.txt')
 data <- data.table(data)
 nr1 <- nrow(data)
-options(scipen=1, digits=2)
 ```
 
-####Cleaning the data
+####Cleaning the data set
 
 The databse contains 902297 records. After some quick inspection it was noticed some small problems, mainly mispelled words, in the columns that will be used for this study. The column that stores the events types (EVTYPE) has 985, but only 48 were expected.
 
@@ -63,7 +63,7 @@ nr2 <- nrow(data)
 perc1 <- 100*nr2/nr1
 ```
 
-That manipulation resulted in a slightily smaller set of data, with 882319 records (97.7858732% of the original set). For dealing with the first objective (harmful events) two other colums (FATALITIES and INJURIES) are necessary but there were no problems with this data. 
+That manipulation resulted in a slightily smaller set of data, with 882319 records (97.79% of the original set). For dealing with the first objective (harmful events) two other colums (FATALITIES and INJURIES) are necessary but there were no problems with this data. 
 
 For the second objective it was necessary to take a look at four columns despicting economic damage affecting properties and crops:
 
@@ -84,29 +84,55 @@ nr3 <- nrow(data)
 perc2 <- 100*nr3/nr1
 ```
 
-After this process, there were 881992 rows (97.7496323% of the original set). 
+After this process, there were 881992 rows (97.75% of the original set). 
 
 ###Data Analyses
 
-In order to achieve the proposed objectives, some data manipulation and the production of some indicators are necessary. This section describes this process.
+To achieve the proposed objectives, some data manipulation is necessary in order to produce some indicators. This section describes the process.
 
 ####Fatalities and Injuries
+
+The records were grouped by event type, counting the number of fatalities and injured people for each one. A third indicator was created aggregating fatalities and injuries. Weights were used for that aggregation, 10 for fatelities and 1 for injuries. The result was named sevInd (severity indicator). This kind of weights is used in the analysis of accidents in a transportation network.Three ranking lists were prepared based on these indicators.  
+
 
 
 ```r
 totFat <- sum(data$FATALITIES,na.rm=TRUE)
 totInj <- sum(data$INJURIES,na.rm=TRUE)
 harm <- group_by(data,EVTYPE) %>% 
-        summarise(NofEV=n(),Fatalities = sum(FATALITIES),
-                  Injuries=sum(INJURIES),
-                  sevIndex = (10*sum(FATALITIES)+sum(INJURIES))) 
+        summarise(NofEV=n(),
+                  Fatalities = sum(FATALITIES),
+                  Injuries = sum(INJURIES),
+                  sevInd = (10*sum(FATALITIES)+sum(INJURIES))) %>%
+        arrange(desc(Fatalities))
 len <- nrow(harm)
 harm$rankF <- len - ave(harm$Fatalities,FUN=rank) + 1
 harm$rankI <- len - ave(harm$Injuries,FUN=rank) + 1
-harm$rankS <- len - ave(harm$sevIndex,FUN=rank) + 1
+harm$rankS <- len - ave(harm$sevInd,FUN=rank) + 1
+harm
+```
+
+```
+## Source: local data table [46 x 8]
+## 
+##               EVTYPE  NofEV Fatalities Injuries sevInd rankF rankI rankS
+## 1            TORNADO  60628       5630    91321 147621     1     1     1
+## 2     EXCESSIVE HEAT   1678       1903     6525  25555     2     4     2
+## 3        FLASH FLOOD  54262        978     1777  11557     3     8     5
+## 4               HEAT    767        937     2100  11470     4     6     7
+## 5          LIGHTNING  15733        816     5230  13390     5     5     4
+## 6  THUNDERSTORM WIND 323133        701     9352  16362     6     2     3
+## 7              FLOOD  25326        470     6789  11489     7     3     6
+## 8        RIP CURRENT    470        368      232   3912     8    21     8
+## 9          HIGH WIND  20212        246     1137   3597     9    11     9
+## 10         AVALANCHE    386        224      170   2410    10    22    12
+## ..               ...    ...        ...      ...    ...   ...   ...   ...
 ```
 
 ####Properties and Crop Damage
+
+The records presents values in thousands, millions and billions of dollars. In this case, the first step, consisted of bring all the costs to a same base, millions of dollars. In a similar way as the one described above, three indicators were created. The first two consisted of the costs aggregation for each type of event and damage. The third one sums the two costs. In this case it was not necessary a use of any kind of weight.  
+
 
 
 ```r
@@ -126,17 +152,34 @@ len <- nrow(econ)
 econ$rankP <- len - ave(econ$PropDmg,FUN=rank) + 1
 econ$rankC <- len - ave(econ$CropDmg,FUN=rank) + 1
 econ$rankT <- len - ave(econ$TotDmg,FUN=rank) + 1
+econ
+```
+
+```
+## Source: local data table [46 x 8]
+## 
+##               EVTYPE  NofEV PropDmg CropDmg TotDmg rankP rankC rankT
+## 1              FLOOD  25326  144665 5661.97 150327     1     2     1
+## 2            TORNADO  60628   56940  364.95  57305     2    13     2
+## 3        FLASH FLOOD  54262   16348 1420.73  17769     3     5     4
+## 4               HAIL 288625   15789 3003.95  18793     4     4     3
+## 5  THUNDERSTORM WIND 323133    9915 1167.50  11083     5     6     6
+## 6     TROPICAL STORM    690    7704  678.35   8382     6     9     8
+## 7       WINTER STORM  11432    6688   26.94   6715     7    18     9
+## 8          HIGH WIND  20212    5270  638.57   5909     8    10    10
+## 9           WILDFIRE   2761    4765  295.47   5061     9    14    11
+## 10  STORM SURGE/TIDE    148    4641    0.85   4642    10    22    12
+## ..               ...    ...     ...     ...    ...   ...   ...   ...
 ```
 
 ###Results
-* There should be a section titled Results in which your results are presented.  
-* You may have other sections in your analysis, but Data Processing and Results are required.  
-* The analysis document must have at least one figure containing a plot.  
-* Your analyis must have no more than three figures. Figures may have multiple plots in them (i.e. panel plots), but there cannot be more than three figures total.  
-* You must show all your code for the work in your analysis document. This may make the document a bit verbose, but that is okay. In general, you should ensure that echo = TRUE for every code chunk (this is the default setting in knitr).  
 
+This section presents the results obtained in the process described in the previous section. 
 
 ####Fatalities and Injuries
+
+Figure 1 represents, in three graphs, the harm indicators. The Y-axis values labels despict the ranking order for each one. 
+
 
 ```r
 result1 <- arrange(harm,rankF)[1:10] %>% 
@@ -155,8 +198,8 @@ p2 <- ggplot(result2,aes(x=ord2,y=Injuries)) +
 
 result3 <- arrange(harm,rankS)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
-ord3 <- reorder(result3$EVTYPE,result3$sevIndex)
-p3 <- ggplot(result3,aes(x=ord3,y=sevIndex)) + 
+ord3 <- reorder(result3$EVTYPE,result3$sevInd)
+p3 <- ggplot(result3,aes(x=ord3,y=sevInd)) + 
         geom_bar(stat="identity",position="dodge",fill="orange",color="black") + 
         xlab("") + ylab("Fatalities x 10 + Injuries") + coord_flip()
 
@@ -169,7 +212,16 @@ grid.arrange(p1, p2, p3, ncol = 1,
 
 ![](repdata-assess2_files/figure-html/unnamed-chunk-7-1.png) 
 
+The percentage of the top-ten events for each indicator are:
+
+* Fatalities: 90.06%
+* Injuries: 94.96%
+* sevInd: 91.7%
+
 ####Properties and Crop Damage
+
+Figure 2 represents, in three graphs, the economic damage indicators. The Y-axis values labels despict the ranking order for each one. 
+
 
 ```r
 result1 <- arrange(econ,rankP)[1:10] %>% 
@@ -211,8 +263,16 @@ grid.arrange(p1, p2, p3, ncol = 1,
 
 ![](repdata-assess2_files/figure-html/unnamed-chunk-8-1.png) 
 
-###Conclusion
+The percentage of the top-ten events for each indicator are:
 
-###References (?)
+* Property damage: 96.8%
+* Crop damage: 94.55%
+* Total damage: 94.7%
+
+  
+  
+You can access the data sets and the script on my [GitHub page](https://github.com/manazevedof/RepData_PeerAssessment2).
+
+
 
 

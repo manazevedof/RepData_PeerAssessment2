@@ -25,6 +25,7 @@ require(stringr)
 require(grid)
 require(gridExtra)
 require(RCurl)
+options(scipen=1, digits=2,width=100)
 ```
 
 ###Data Processing
@@ -42,10 +43,9 @@ data <- read.csv(localfilename)
 type <- readLines('storm.txt')
 data <- data.table(data)
 nr1 <- nrow(data)
-options(scipen=1, digits=2)
 ```
 
-####Cleaning the data
+####Cleaning the data set
 
 The databse contains `r nr1` records. After some quick inspection it was noticed some small problems, mainly mispelled words, in the columns that will be used for this study. The column that stores the events types (EVTYPE) has `r length(unique(data$EVTYPE))`, but only `r length(unique(type))` were expected.
 
@@ -90,24 +90,33 @@ After this process, there were `r nr3` rows (`r perc2`% of the original set).
 
 ###Data Analyses
 
-In order to achieve the proposed objectives, some data manipulation and the production of some indicators are necessary. This section describes this process.
+To achieve the proposed objectives, some data manipulation is necessary in order to produce some indicators. This section describes the process.
 
 ####Fatalities and Injuries
+
+The records were grouped by event type, counting the number of fatalities and injured people for each one. A third indicator was created aggregating fatalities and injuries. Weights were used for that aggregation, 10 for fatelities and 1 for injuries. The result was named sevInd (severity indicator). This kind of weights is used in the analysis of accidents in a transportation network.Three ranking lists were prepared based on these indicators.  
+
 
 ```{r,message=FALSE}
 totFat <- sum(data$FATALITIES,na.rm=TRUE)
 totInj <- sum(data$INJURIES,na.rm=TRUE)
 harm <- group_by(data,EVTYPE) %>% 
-        summarise(NofEV=n(),Fatalities = sum(FATALITIES),
-                  Injuries=sum(INJURIES),
-                  sevIndex = (10*sum(FATALITIES)+sum(INJURIES))) 
+        summarise(NofEV=n(),
+                  Fatalities = sum(FATALITIES),
+                  Injuries = sum(INJURIES),
+                  sevInd = (10*sum(FATALITIES)+sum(INJURIES))) %>%
+        arrange(desc(Fatalities))
 len <- nrow(harm)
 harm$rankF <- len - ave(harm$Fatalities,FUN=rank) + 1
 harm$rankI <- len - ave(harm$Injuries,FUN=rank) + 1
-harm$rankS <- len - ave(harm$sevIndex,FUN=rank) + 1
+harm$rankS <- len - ave(harm$sevInd,FUN=rank) + 1
+harm
 ```
 
 ####Properties and Crop Damage
+
+The records presents values in thousands, millions and billions of dollars. In this case, the first step, consisted of bring all the costs to a same base, millions of dollars. In a similar way as the one described above, three indicators were created. The first two consisted of the costs aggregation for each type of event and damage. The third one sums the two costs. In this case it was not necessary a use of any kind of weight.  
+
 
 ```{r,message=FALSE}
 any <- data[PROPDMGEXP == 'K',PROPDMG:=PROPDMG/1000]
@@ -126,17 +135,17 @@ len <- nrow(econ)
 econ$rankP <- len - ave(econ$PropDmg,FUN=rank) + 1
 econ$rankC <- len - ave(econ$CropDmg,FUN=rank) + 1
 econ$rankT <- len - ave(econ$TotDmg,FUN=rank) + 1
+econ
 ```
 
 ###Results
-* There should be a section titled Results in which your results are presented.  
-* You may have other sections in your analysis, but Data Processing and Results are required.  
-* The analysis document must have at least one figure containing a plot.  
-* Your analyis must have no more than three figures. Figures may have multiple plots in them (i.e. panel plots), but there cannot be more than three figures total.  
-* You must show all your code for the work in your analysis document. This may make the document a bit verbose, but that is okay. In general, you should ensure that echo = TRUE for every code chunk (this is the default setting in knitr).  
 
+This section presents the results obtained in the process described in the previous section. 
 
 ####Fatalities and Injuries
+
+Figure 1 represents, in three graphs, the harm indicators. The Y-axis values labels despict the ranking order for each one. 
+
 ```{r fig.height = 7.2}
 result1 <- arrange(harm,rankF)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
@@ -154,8 +163,8 @@ p2 <- ggplot(result2,aes(x=ord2,y=Injuries)) +
 
 result3 <- arrange(harm,rankS)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
-ord3 <- reorder(result3$EVTYPE,result3$sevIndex)
-p3 <- ggplot(result3,aes(x=ord3,y=sevIndex)) + 
+ord3 <- reorder(result3$EVTYPE,result3$sevInd)
+p3 <- ggplot(result3,aes(x=ord3,y=sevInd)) + 
         geom_bar(stat="identity",position="dodge",fill="orange",color="black") + 
         xlab("") + ylab("Fatalities x 10 + Injuries") + coord_flip()
 
@@ -166,7 +175,16 @@ grid.arrange(p1, p2, p3, ncol = 1,
              just=c("top"))
 ```
 
+The percentage of the top-ten events for each indicator are:
+
+* Fatalities: `r 100 * sum(harm$Fatalities[harm$rankF<=10])/totFat`%
+* Injuries: `r 100 * sum(harm$Injuries[harm$rankI<=10])/totInj`%
+* sevInd: `r 100 * sum(harm$sevInd[harm$rankS<=10])/(10 * totFat+totInj)`%
+
 ####Properties and Crop Damage
+
+Figure 2 represents, in three graphs, the economic damage indicators. The Y-axis values labels despict the ranking order for each one. 
+
 ```{r fig.height = 7.2}
 result1 <- arrange(econ,rankP)[1:10] %>% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
@@ -205,8 +223,16 @@ grid.arrange(p1, p2, p3, ncol = 1,
              just = c("top"))
 ```
 
-###Conclusion
+The percentage of the top-ten events for each indicator are:
 
-###References (?)
+* Property damage: `r 100 * sum(econ$PropDmg[econ$rankP<=10])/totPdmg`%
+* Crop damage: `r 100 * sum(econ$CropDmg[econ$rankC<=10])/totCdmg`%
+* Total damage: `r 100 * sum(econ$TotDmg[econ$rankT<=10])/(totPdmg+totCdmg)`%
+
+  
+  
+You can access the data sets and the script on my [GitHub page](https://github.com/manazevedof/RepData_PeerAssessment2).
+
+
 
 
