@@ -3,11 +3,11 @@ Mario A. N. Azevedo Filho
 Sunday, May 24, 2015  
 
 ###Synopsis
-Some weather related events can cause serious disruption of peoples life. Men may be blamed for provocating some of these "nature's revenge" episodies. This study was prepared based on a huge database of these type of events that have affect the US territory. The data set was gathered by the U.S. [National Oceanic and Atmospheric Administration's (NOAA)](http://www.noaa.gov/) and, in this case,  it was used a copy available [here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2). The main objectives were the evaluation of the most harmful type of events with respect to population health and those with higher impact on the economy. After the analysis it was possible to list the type of events with more significant impacts.
+Some weather related events can cause serious disruption of people's life. Men may be blamed for causing some of these "nature's revenge" episodes. This study was prepared based on a huge database of these types of events that have affected the US territory. The data set was gathered by the U.S. [National Oceanic and Atmospheric Administration's (NOAA)](http://www.noaa.gov/) and, in this case,  it was used a copy available [here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2). The main objectives were the evaluation of the most harmful type of events with respect to population health and those with higher impact on the economy. After the analysis it was possible to list the type of events with more significant impacts.
 
 ###Preparing the analysis environment
 
-The first step consists of loading the libraries that will be used in the R script. SOme of them will be used to clean and shape the data sets (data.table, dplyr and tidyr). Other will be used to deal with graph preparation (ggplot2, grid, gridExtra). "stringr" will be used to manipulate some strings and "RCurl" is necessary for file downloading.
+The first step consists of loading the libraries that will be used in the R script. Some of them will be used to clean and shape the data sets (data.table, dplyr and tidyr). Other will be used to deal with graph preparation (ggplot2, grid, gridExtra). "stringr" will be used to manipulate some strings and "RCurl" is necessary for file downloading.
 
 
 
@@ -27,7 +27,7 @@ options(scipen=1, digits=2,width=100)
 
 ####Downloading and reading the data
 
-The idea here is to download the file and save it at the local disk. In a second step the data is read. There is a second file ([storm.txt](https://github.com/manazevedof/RepData_PeerAssessment2/blob/master/storm.txt "storm.txt")), locally produced, consisting of a list of the official event types.
+The idea here is to download the file and save it at the local disk. In a second step the data is read. There is a second file ([storm.txt](https://github.com/manazevedof/RepData_PeerAssessment2/blob/master/storm.txt "storm.txt")), locally produced, consisting of a list of the events types.
 
 
 ```r
@@ -43,9 +43,9 @@ nr1 <- nrow(data)
 
 ####Cleaning the data set
 
-The databse contains 902297 records. After some quick inspection it was noticed some small problems, mainly mispelled words, in the columns that will be used for this study. The column that stores the events types (EVTYPE) has 985, but only 48 were expected.
+The database contains 902297 records. After some quick inspection it was noticed some small problems, mainly misspelled words, in the columns that will be used for this study. The column that stores the events types (EVTYPE) has 985, but only 48 were expected.
 
-The cleaning process consisted of fixing some mispelled words and filtering, in order to keep just the events present in the official list. The changes were:  
+The cleaning process consisted of fixing some misspelled words and filtering, in order to keep just the events present in the official list. The changes were:  
 
 * Convert all values of EVTYPE to uppercase;  
 * Replace "TSTM" with "THUNDERSTORM";  
@@ -63,16 +63,16 @@ nr2 <- nrow(data)
 perc1 <- 100*nr2/nr1
 ```
 
-That manipulation resulted in a slightily smaller set of data, with 882319 records (97.79% of the original set). For dealing with the first objective (harmful events) two other colums (FATALITIES and INJURIES) are necessary but there were no problems with this data. 
+That manipulation resulted in a slightly smaller set of data, with (97.79% of the original set). For dealing with the first objective (harmful events) two other columns (FATALITIES and INJURIES) are necessary but there were no problems with this data.  
 
-For the second objective it was necessary to take a look at four columns despicting economic damage affecting properties and crops:
+For the second objective it was necessary to take a look at four columns depicting economic damage affecting properties and crops:
 
 * PROPDMG - the estimated cost of the event damage caused to properties;  
 * PROPDMGEXP - a factor representing a multiplier for the above column (K for thousand, M for million and B for billion dollars);  
 * CROPDMG - the estimated cost of the event damage caused to crops;  
 * CROPDMGEXP - a multiplier, similar to the above.  
 
-Only the multiplier columns presented some typos or factors not in the c('K','M','B','') list. That was solved with some mutation and filtering.  
+Only the multiplier columns presented some typos or factors not in the c('K','M','B','') list. That was solved with some mutation and filtering.
 
 
 ```r
@@ -88,11 +88,11 @@ After this process, there were 881992 rows (97.75% of the original set).
 
 ###Data Analyses
 
-To achieve the proposed objectives, some data manipulation is necessary in order to produce some indicators. This section describes the process.
+To achieve the proposed objectives, some data manipulation is necessary in order to produce the indicators. This section describes the process.
 
 ####Fatalities and Injuries
 
-The records were grouped by event type, counting the number of fatalities and injured people for each one. A third indicator was created aggregating fatalities and injuries. Weights were used for that aggregation, 10 for fatelities and 1 for injuries. The result was named sevInd (severity indicator). This kind of weights is used in the analysis of accidents in a transportation network.Three ranking lists were prepared based on these indicators.  
+The records were grouped by event type, counting the number of fatalities and injured people for each one. A third indicator was created aggregating fatalities and injuries. Weights were used for that aggregation, 10 for fatalities and 1 for injuries. The result was named sevInd (severity indicator). This kind of weights is used in the analysis of accidents in a transportation network. Three ranking lists were prepared based on these indicators. 
 
 
 
@@ -131,7 +131,7 @@ harm
 
 ####Properties and Crop Damage
 
-The records presents values in thousands, millions and billions of dollars. In this case, the first step, consisted of bring all the costs to a same base, millions of dollars. In a similar way as the one described above, three indicators were created. The first two consisted of the costs aggregation for each type of event and damage. The third one sums the two costs. In this case it was not necessary a use of any kind of weight.  
+The records present values in thousands, millions and billions of dollars. In this case, the first step consisted of bringing all the costs to a same base, millions of dollars. In a similar way as the one described above, three indicators were created. The first two consisted of the costs aggregation for each type of event and damage. The third one sums the two costs. In this case it was not necessary a use of any kind of weight.  
 
 
 
@@ -174,11 +174,11 @@ econ
 
 ###Results
 
-This section presents the results obtained in the process described in the previous section. 
+This section presents the results obtained in the process described in the previous section.
 
 ####Fatalities and Injuries
 
-Figure 1 represents, in three graphs, the harm indicators. The Y-axis values labels despict the ranking order for each one. 
+Figure 1 represents, in three graphs, the harm indicators. The Y-axis values labels depict the ranking order for each one.
 
 
 ```r
@@ -220,7 +220,7 @@ The percentage of the top-ten events for each indicator are:
 
 ####Properties and Crop Damage
 
-Figure 2 represents, in three graphs, the economic damage indicators. The Y-axis values labels despict the ranking order for each one. 
+Figure 2 represents, in three graphs, the economic damage indicators. The Y-axis values labels depict the ranking order for each one.
 
 
 ```r
@@ -272,7 +272,3 @@ The percentage of the top-ten events for each indicator are:
   
   
 You can access the data sets and the script on my [GitHub page: https://github.com/manazevedof/RepData_PeerAssessment2/](https://github.com/manazevedof/RepData_PeerAssessment2/).
-
-
-
-

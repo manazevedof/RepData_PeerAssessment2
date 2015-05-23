@@ -69,11 +69,11 @@ img {
 
 <div id="synopsis" class="section level3">
 <h3>Synopsis</h3>
-<p>Some weather related events can cause serious disruption of peoples life. Men may be blamed for provocating some of these “nature’s revenge” episodies. This study was prepared based on a huge database of these type of events that have affect the US territory. The data set was gathered by the U.S. <a href="http://www.noaa.gov/">National Oceanic and Atmospheric Administration’s (NOAA)</a> and, in this case, it was used a copy available <a href="https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2">here</a>. The main objectives were the evaluation of the most harmful type of events with respect to population health and those with higher impact on the economy. After the analysis it was possible to list the type of events with more significant impacts.</p>
+<p>Some weather related events can cause serious disruption of people’s life. Men may be blamed for causing some of these “nature’s revenge” episodes. This study was prepared based on a huge database of these types of events that have affected the US territory. The data set was gathered by the U.S. <a href="http://www.noaa.gov/">National Oceanic and Atmospheric Administration’s (NOAA)</a> and, in this case, it was used a copy available <a href="https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2">here</a>. The main objectives were the evaluation of the most harmful type of events with respect to population health and those with higher impact on the economy. After the analysis it was possible to list the type of events with more significant impacts.</p>
 </div>
 <div id="preparing-the-analysis-environment" class="section level3">
 <h3>Preparing the analysis environment</h3>
-<p>The first step consists of loading the libraries that will be used in the R script. SOme of them will be used to clean and shape the data sets (data.table, dplyr and tidyr). Other will be used to deal with graph preparation (ggplot2, grid, gridExtra). “stringr” will be used to manipulate some strings and “RCurl” is necessary for file downloading.</p>
+<p>The first step consists of loading the libraries that will be used in the R script. Some of them will be used to clean and shape the data sets (data.table, dplyr and tidyr). Other will be used to deal with graph preparation (ggplot2, grid, gridExtra). “stringr” will be used to manipulate some strings and “RCurl” is necessary for file downloading.</p>
 <pre class="r"><code>require(data.table)
 require(dplyr)
 require(tidyr)
@@ -88,7 +88,7 @@ options(scipen=1, digits=2,width=100)</code></pre>
 <h3>Data Processing</h3>
 <div id="downloading-and-reading-the-data" class="section level4">
 <h4>Downloading and reading the data</h4>
-<p>The idea here is to download the file and save it at the local disk. In a second step the data is read. There is a second file (<a href="https://github.com/manazevedof/RepData_PeerAssessment2/blob/master/storm.txt" title="storm.txt">storm.txt</a>), locally produced, consisting of a list of the official event types.</p>
+<p>The idea here is to download the file and save it at the local disk. In a second step the data is read. There is a second file (<a href="https://github.com/manazevedof/RepData_PeerAssessment2/blob/master/storm.txt" title="storm.txt">storm.txt</a>), locally produced, consisting of a list of the events types.</p>
 <pre class="r"><code>fileURL &lt;- &quot;https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2&quot;
 localfilename &lt;- &quot;repdata-data-StormData.csv.bz2&quot;
 download.file(fileURL,localfilename,method=&quot;curl&quot;)
@@ -100,8 +100,8 @@ nr1 &lt;- nrow(data)</code></pre>
 </div>
 <div id="cleaning-the-data-set" class="section level4">
 <h4>Cleaning the data set</h4>
-<p>The databse contains 902297 records. After some quick inspection it was noticed some small problems, mainly mispelled words, in the columns that will be used for this study. The column that stores the events types (EVTYPE) has 985, but only 48 were expected.</p>
-<p>The cleaning process consisted of fixing some mispelled words and filtering, in order to keep just the events present in the official list. The changes were:</p>
+<p>The database contains 902297 records. After some quick inspection it was noticed some small problems, mainly misspelled words, in the columns that will be used for this study. The column that stores the events types (EVTYPE) has 985, but only 48 were expected.</p>
+<p>The cleaning process consisted of fixing some misspelled words and filtering, in order to keep just the events present in the official list. The changes were:</p>
 <ul>
 <li>Convert all values of EVTYPE to uppercase;<br /></li>
 <li>Replace “TSTM” with “THUNDERSTORM”;<br /></li>
@@ -115,8 +115,8 @@ data[data$EVTYPE == &quot;MARINE THUNDERSTORM WINDS&quot;]$EVTYPE &lt;- &quot;MA
 data &lt;- filter(data,EVTYPE %in% type)
 nr2 &lt;- nrow(data)
 perc1 &lt;- 100*nr2/nr1</code></pre>
-<p>That manipulation resulted in a slightily smaller set of data, with 882319 records (97.79% of the original set). For dealing with the first objective (harmful events) two other colums (FATALITIES and INJURIES) are necessary but there were no problems with this data.</p>
-<p>For the second objective it was necessary to take a look at four columns despicting economic damage affecting properties and crops:</p>
+<p>That manipulation resulted in a slightly smaller set of data, with (97.79% of the original set). For dealing with the first objective (harmful events) two other columns (FATALITIES and INJURIES) are necessary but there were no problems with this data.</p>
+<p>For the second objective it was necessary to take a look at four columns depicting economic damage affecting properties and crops:</p>
 <ul>
 <li>PROPDMG - the estimated cost of the event damage caused to properties;<br /></li>
 <li>PROPDMGEXP - a factor representing a multiplier for the above column (K for thousand, M for million and B for billion dollars);<br /></li>
@@ -135,10 +135,10 @@ perc2 &lt;- 100*nr3/nr1</code></pre>
 </div>
 <div id="data-analyses" class="section level3">
 <h3>Data Analyses</h3>
-<p>To achieve the proposed objectives, some data manipulation is necessary in order to produce some indicators. This section describes the process.</p>
+<p>To achieve the proposed objectives, some data manipulation is necessary in order to produce the indicators. This section describes the process.</p>
 <div id="fatalities-and-injuries" class="section level4">
 <h4>Fatalities and Injuries</h4>
-<p>The records were grouped by event type, counting the number of fatalities and injured people for each one. A third indicator was created aggregating fatalities and injuries. Weights were used for that aggregation, 10 for fatelities and 1 for injuries. The result was named sevInd (severity indicator). This kind of weights is used in the analysis of accidents in a transportation network.Three ranking lists were prepared based on these indicators.</p>
+<p>The records were grouped by event type, counting the number of fatalities and injured people for each one. A third indicator was created aggregating fatalities and injuries. Weights were used for that aggregation, 10 for fatalities and 1 for injuries. The result was named sevInd (severity indicator). This kind of weights is used in the analysis of accidents in a transportation network. Three ranking lists were prepared based on these indicators.</p>
 <pre class="r"><code>totFat &lt;- sum(data$FATALITIES,na.rm=TRUE)
 totInj &lt;- sum(data$INJURIES,na.rm=TRUE)
 harm &lt;- group_by(data,EVTYPE) %&gt;% 
@@ -169,7 +169,7 @@ harm</code></pre>
 </div>
 <div id="properties-and-crop-damage" class="section level4">
 <h4>Properties and Crop Damage</h4>
-<p>The records presents values in thousands, millions and billions of dollars. In this case, the first step, consisted of bring all the costs to a same base, millions of dollars. In a similar way as the one described above, three indicators were created. The first two consisted of the costs aggregation for each type of event and damage. The third one sums the two costs. In this case it was not necessary a use of any kind of weight.</p>
+<p>The records present values in thousands, millions and billions of dollars. In this case, the first step consisted of bringing all the costs to a same base, millions of dollars. In a similar way as the one described above, three indicators were created. The first two consisted of the costs aggregation for each type of event and damage. The third one sums the two costs. In this case it was not necessary a use of any kind of weight.</p>
 <pre class="r"><code>any &lt;- data[PROPDMGEXP == 'K',PROPDMG:=PROPDMG/1000]
 any &lt;- data[PROPDMGEXP == 'B',PROPDMG:=PROPDMG*1000]
 any &lt;- data[CROPDMGEXP == 'K',CROPDMG:=CROPDMG/1000]
@@ -208,7 +208,7 @@ econ</code></pre>
 <p>This section presents the results obtained in the process described in the previous section.</p>
 <div id="fatalities-and-injuries-1" class="section level4">
 <h4>Fatalities and Injuries</h4>
-<p>Figure 1 represents, in three graphs, the harm indicators. The Y-axis values labels despict the ranking order for each one.</p>
+<p>Figure 1 represents, in three graphs, the harm indicators. The Y-axis values labels depict the ranking order for each one.</p>
 <pre class="r"><code>result1 &lt;- arrange(harm,rankF)[1:10] %&gt;% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
 ord1 &lt;- reorder(result1$EVTYPE,result1$Fatalities)
@@ -245,7 +245,7 @@ grid.arrange(p1, p2, p3, ncol = 1,
 </div>
 <div id="properties-and-crop-damage-1" class="section level4">
 <h4>Properties and Crop Damage</h4>
-<p>Figure 2 represents, in three graphs, the economic damage indicators. The Y-axis values labels despict the ranking order for each one.</p>
+<p>Figure 2 represents, in three graphs, the economic damage indicators. The Y-axis values labels depict the ranking order for each one.</p>
 <pre class="r"><code>result1 &lt;- arrange(econ,rankP)[1:10] %&gt;% 
         mutate(EVTYPE = str_to_lower(EVTYPE))
 ord1 &lt;- reorder(result1$EVTYPE,result1$PropDmg)
